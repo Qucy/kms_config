@@ -1,0 +1,31 @@
+---
+
+
+- name: Configure webserver with nginx
+  hosts: all
+  become: True
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Ensure nginx is installed
+      package: name=nginx update_cache=yes
+
+    - name: Manage nginx config template
+      template:
+        src: nginx.conf.j2
+        dest: "{{ conf_file }}"
+        mode: '0644'
+      notify: Restart nginx
+
+    - name: Enable configuration
+      file: >
+        dest=/etc/nginx/sites-enabled/default
+        src=/etc/nginx/sites-available/default
+        state=link
+
+    - name: Restart nginx
+      service: name=nginx state=restarted
+...

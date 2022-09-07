@@ -1,0 +1,108 @@
+---
+
+- name: Customize timezone
+  timezone:
+   name: Asia/Shanghai
+
+- name: Clearing yum cache before any yum operations
+  shell: yum clean all
+  args:
+   warn: no
+
+- name: Yum install all required packages
+  yum:
+   name: "{{ basic_packages}}"
+   vars:
+    basic_packages:
+     - git
+     - nasm
+     - sox
+     - telnet
+     - bzip2
+     - gcc
+     - make
+     - sqlite
+     - tk
+     - python-devel
+     - python-setuptools
+     - openssl
+     - nginx
+     - nodejs
+
+- name: Install the Python 
+  block:
+    - name: Install the python
+      yum: 
+        name: "{{ python3_packages }}"
+        disablerepo: rhel-7-server-rpms
+        state: latest
+      vars:
+        python3_packages:
+          - python3
+          - python3-devel
+    - name: Back up then change the system default python from python2 to python3
+      shell: |
+        mv /usr/bin/python /usr/bin/python.2.bak
+        ln -s /usr/bin/python3 /usr/bin/python
+
+- name: Python packages management
+  block:
+    - name: Upgrade & Install python components
+      pip:
+        executable: /usr/bin/pip3
+        name:
+          - pip
+          - setuptools==58.0.1
+          - google-compute-engine
+          - pytest-runner
+    - name: Upgrade & install Python Libraries
+      pip:
+        executable: /usr/bin/pip3
+        name:
+          - flask
+          - gunciron
+          - Django
+          - django-cors-headers
+          - djangorestframework
+          - psycopg2-binary
+          - Pillow
+          - opencv-python
+    - name: Make the python module directory avaiable to all users
+      file:
+        path: "{{item}}"
+        recurse: yes
+        mode: 0755
+        with_items:
+          - /usr/local/lib/python3.6
+          - /usr/local/lib64/python3.6
+          - /usr/lib/python3.6
+          - /usr/lib64/python3.6
+     
+
+- name: Set up the frontend and backend
+  block:
+    - name: Clone the frontend repo
+      git:
+      repo: "{{ git_frontend_repo_url }}"
+      dest: "{{ repo_path }}"
+      version: "{{ repo_branch }}"
+      accept_hostkey: yes
+
+    - name: Clone the backend repo
+      git:
+      repo: "{{ git_backend_repo_url }}"
+      dest: "{{ repo_path }}"
+      version: "{{ repo_branch }}"
+      accept_hostkey: yes
+
+    - name: Install packages based on package.json using the npm
+      npm:
+        path: "{{ repo_path }}"
+        state: present
+
+    - name: Build app
+      command: npm run build
+      args:
+        chdir: "{{ repo_path }}"
+        
+...

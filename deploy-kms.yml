@@ -1,0 +1,33 @@
+- hosts: all
+  gather_facts: no
+  become: True
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    gunicorn_port: 8000
+    projdir: "/home/john/django-lessons-proj"
+    etcdir: "/etc/"
+
+    db_user: ""
+    db_name: ""
+    db_pass: ""
+    secret_key: ""
+    
+    tls_dir: /etc/nginx/ssl/
+    key_file: nginx.key
+    cert_file: nginx.crt
+    conf_file: /etc/nginx/sites-available/default
+    server_name: localhost
+    git_frontend_repo_url: https://github.com/Qucy/kms
+    git_backend_repo_url: https://github.com/Qucy/kms_backend.git
+    repo_branch: master
+    repo_path: ./home/kms/
+
+  roles:
+    - role: 'deploy/django-demo-app/nginx'
+      tags: ['nginx']
+    - role: 'deploy/django-demo-app/db'
+      tags: ['db']
+    - role: 'deploy/django-demo-app/app'
+      tags: ['app']
+    - role: 'deploy/django-demo-app/gunicorn'
+      tags: ['gunicorn']
